@@ -26,52 +26,7 @@ def kuramoto(traces, smoothing=0.0, distance=10, prominence=5):
     :return: Timeseries of Kuramoto order paramter
     :rtype: numpy.ndarray
     """
-    @numba.njit
-    def _estimate_phase(maximalist, n_times):
-        lastMax = 0
-        phases = np.empty((n_times), dtype=np.float64)
-        n = 0
-        for m in maximalist:
-            for t in range(lastMax, m):
-                # compute instantaneous phase
-                phi = 2 * np.pi * float(t - lastMax) / float(m - lastMax)
-                phases[n] = phi
-                n += 1
-            lastMax = m
-        phases[-1] = 2 * np.pi
-        return phases
-
-    @numba.njit
-    def _estimate_r(ntraces, times, phases):
-        kuramoto = np.empty((times), dtype=np.float64)
-        for t in range(times):
-            R = 1j*0
-            for n in range(ntraces):
-                R += np.exp(1j * phases[n, t])
-            R /= ntraces
-            kuramoto[t] = np.absolute(R)
-        return kuramoto
-
-    nTraces, nTimes = traces.shape
-    phases = np.empty_like(traces)
-    for n in range(nTraces):
-        a = traces[n]
-        # find peaks
-        if smoothing > 0:
-            # smooth data
-            a = scipy.ndimage.filters.gaussian_filter(traces[n], smoothing)
-        maximalist = scipy.signal.find_peaks(a, distance=distance,
-                                             prominence=prominence)[0]
-        maximalist = np.append(maximalist, len(traces[n])-1).astype(int)
-
-        if len(maximalist) > 1:
-            phases[n, :] = _estimate_phase(maximalist, nTimes)
-        else:
-            logging.warning("Kuramoto: No peaks found, returning 0.")
-            return 0
-    # determine kuramoto order paramter
-    kuramoto = _estimate_r(nTraces, nTimes, phases)
-    return kuramoto
+    pass
 
 
 def matrix_correlation(M1, M2):
@@ -85,8 +40,7 @@ def matrix_correlation(M1, M2):
     :return: Correlation coefficient
     :rtype: float
     """
-    cc = np.corrcoef(M1[np.triu_indices_from(M1, k=1)], M2[np.triu_indices_from(M2, k=1)])[0, 1]
-    return cc
+    pass
 
 
 def weighted_correlation(x, y, w):
@@ -101,16 +55,7 @@ def weighted_correlation(x, y, w):
     :return: Weighted correlation coefficient
     :rtype: float
     """
-
-    def weighted_mean(x, w):
-        """Weighted Mean"""
-        return np.sum(x * w) / np.sum(w)
-
-    def weighted_cov(x, y, w):
-        """Weighted Covariance"""
-        return np.sum(w * (x - weighted_mean(x, w)) * (y - weighted_mean(y, w))) / np.sum(w)
-
-    return weighted_cov(x, y, w) / np.sqrt(weighted_cov(x, x, w) * weighted_cov(y, y, w))
+    pass
 
 
 def fc(ts):
@@ -122,9 +67,7 @@ def fc(ts):
     :return: N x N functional connectivity matrix
     :rtype: numpy.ndarray
     """
-    fc = np.corrcoef(ts)
-    fc = np.nan_to_num(fc)  # remove NaNs
-    return fc
+    pass
 
 
 def fcd(ts, windowsize=30, stepsize=5):
@@ -141,28 +84,7 @@ def fcd(ts, windowsize=30, stepsize=5):
     :return: T x T FCD matrix
     :rtype: numpy.ndarray
     """
-    t_window_width = int(windowsize)  # int(windowsize * 30) # x minutes
-    stepsize = stepsize  # ts.shape[1]/N
-    corrFCs = []
-    try:
-        counter = range(0, ts.shape[1] - t_window_width, stepsize)
-
-        for t in counter:
-            ts_slice = ts[:, t : t + t_window_width]
-            corrFCs.append(np.corrcoef(ts_slice))
-
-        FCd = np.empty([len(corrFCs), len(corrFCs)])
-        f1i = 0
-        for f1 in corrFCs:
-            f2i = 0
-            for f2 in corrFCs:
-                FCd[f1i, f2i] = np.corrcoef(f1.reshape((1, f1.size)), f2.reshape((1, f2.size)))[0, 1]
-                f2i += 1
-            f1i += 1
-
-        return FCd
-    except:
-        return 0
+    pass
 
 
 def matrix_kolmogorov(m1, m2):
@@ -176,15 +98,7 @@ def matrix_kolmogorov(m1, m2):
     :return: 2-sample KS statistics
     :rtype: float
     """
-    # get the values of the lower triangle
-    triu_ind1 = np.triu_indices(m1.shape[0], k=1)
-    m1_vals = m1[triu_ind1]
-
-    triu_ind2 = np.triu_indices(m2.shape[0], k=1)
-    m2_vals = m2[triu_ind2]
-
-    # return the distance, omit p-value
-    return scipy.stats.ks_2samp(m1_vals, m2_vals)[0]
+    pass
 
 
 def ts_kolmogorov(ts1, ts2, **fcd_kwargs):
@@ -199,10 +113,7 @@ def ts_kolmogorov(ts1, ts2, **fcd_kwargs):
     :return: 2-sample KS statistics
     :rtype: float
     """
-    fcd1 = fcd(ts1, **fcd_kwargs)
-    fcd2 = fcd(ts2, **fcd_kwargs)
-
-    return matrix_kolmogorov(fcd1, fcd2)
+    pass
 
 
 # def max_distance_cumulative(data1, data2):
@@ -301,23 +212,7 @@ def getPowerSpectrum(activity, dt, maxfr=70, spectrum_windowsize=1.0, normalize=
     :return: Frquencies and the power of each frequency
     :rtype: [np.ndarray, np.ndarray]
     """
-    # convert to one-dimensional array if it is an (1xn)-D array
-    if activity.shape[0] == 1 and activity.shape[1] > 1:
-        activity = activity[0]
-    assert len(activity.shape) == 1, "activity is not one-dimensional!"
-
-    f, Pxx_spec = scipy.signal.welch(
-        activity,
-        1000 / dt,
-        window="hann",
-        nperseg=int(spectrum_windowsize * 1000 / dt),
-        scaling="spectrum",
-    )
-    f = f[f < maxfr]
-    Pxx_spec = Pxx_spec[0 : len(f)]
-    if normalize:
-        Pxx_spec /= np.max(Pxx_spec)
-    return f, Pxx_spec
+    pass
 
 
 def getMeanPowerSpectrum(activities, dt, maxfr=70, spectrum_windowsize=1.0, normalize=False):
@@ -337,14 +232,4 @@ def getMeanPowerSpectrum(activities, dt, maxfr=70, spectrum_windowsize=1.0, norm
     :return: Frquencies and the power of each frequency
     :rtype: [np.ndarray, np.ndarray]
     """
-
-    powers = np.zeros(getPowerSpectrum(activities[0], dt, maxfr, spectrum_windowsize)[0].shape)
-    ps = []
-    for rate in activities:
-        f, Pxx_spec = getPowerSpectrum(rate, dt, maxfr, spectrum_windowsize)
-        ps.append(Pxx_spec)
-        powers += Pxx_spec
-    powers /= len(ps)
-    if normalize:
-        powers /= np.max(powers)
-    return f, powers
+    pass

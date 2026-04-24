@@ -38,25 +38,24 @@ class BaseAtlas:
         return f"{self.name} atlas with {self.no_rois} ROIs."
 
     def names(self, group="cortex"):
-        return [self.atlas[i] for i in getattr(self, group)]
+        pass
 
     def coords(self, group="cortex"):
-        if self._coordinates is not None:
-            return [[self._coordinates[k][i] for k in range(3)] for i in getattr(self, group)]
+        pass
 
     @property
     def node_names(self):
         """
         Return node names in the correct order, i.e. sorted.
         """
-        return [self[key] for key in sorted(self.atlas)]
+        pass
 
     @property
     def no_rois(self):
         """
         Return number of ROIs in the atlas.
         """
-        return len(self.atlas)
+        pass
 
     def add_rois(self, extra_rois):
         """
@@ -65,9 +64,7 @@ class BaseAtlas:
         :param extra_rois: ROIs to add to the atlas, must have unique keys
         :type extra_rois: dict
         """
-        for key in extra_rois:
-            assert key not in self.atlas, f"Node {key} already exists"
-        self.atlas.update(extra_rois)
+        pass
 
     def remove_rois(self, rois_to_remove, reindex=False):
         """
@@ -78,16 +75,7 @@ class BaseAtlas:
         :param reindex: whether to reindex ROIs that are still in the atlas
         :type reindex: bool
         """
-        for key in rois_to_remove:
-            res = self.atlas.pop(key, None)
-            if res is None:
-                logging.warning(f"Node {key} not found, doing nothing...")
-        if reindex:
-            reindexed = {}
-            # new indices as order in sorted old dict by keys
-            for new_idx, old_idx in enumerate(sorted(self.atlas)):
-                reindexed[new_idx] = self.atlas[old_idx]
-            self.atlas = reindexed
+        pass
 
 
 class AutomatedAnatomicalParcellation2(BaseAtlas):

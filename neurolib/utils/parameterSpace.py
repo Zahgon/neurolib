@@ -84,23 +84,10 @@ class ParameterSpace:
         """Returns the parameter space as a dicitonary of lists.
         :rtype: dict
         """
-        return self.parameters
+        pass
 
     def get_parametrization(self):
-        assert self.kind is not None
-        if self.kind in ["point", "bound", "explicit"]:
-            # check same length
-            it = iter(self.parameters.values())
-            length = len(next(it))
-            assert all(len(l) == length for l in it)
-            # just return as dict
-            return self.parameters
-        elif self.kind == "grid":
-            # cartesian product
-            return pypet.cartesian_product(self.parameters)
-        elif self.kind == "sequence":
-            # return as sequence
-            return self._inflate_to_sequence(self.parameters)
+        pass
 
     @staticmethod
     def _inflate_to_sequence(param_dict):
@@ -110,12 +97,7 @@ class ParameterSpace:
         {"a": [1, 2], "b": [3, 4, 5]} ->
             {"a": [1, 2, None, None, None], "b": [None, None, 3, 4, 5]}
         """
-        return {
-            k: [None] * sum([len(tmp) for tmp in list(param_dict.values())[:i]])
-            + v
-            + [None] * sum([len(tmp) for tmp in list(param_dict.values())[i + 1 :]])
-            for i, (k, v) in enumerate(param_dict.items())
-        }
+        pass
 
     def getRandom(self, safe=False):
         """This function returns a random single parameter from the whole space
@@ -128,34 +110,22 @@ class ParameterSpace:
         returning python floats, not, for example numpy.float64 (necessary for pypet).
         ;type safe: bool
         """
-        randomPar = {}
-        if safe:
-            for key, value in self.parameters.items():
-                random_value = np.random.choice(value)
-                if isinstance(random_value, np.float64):
-                    random_value = float(random_value)
-                elif isinstance(random_value, np.int64):
-                    random_value = int(random_value)
-                randomPar[key] = random_value
-        else:
-            for key, value in self.parameters.items():
-                randomPar[key] = np.random.choice(value)
-        return randomPar
+        pass
 
     @property
     def lowerBound(self):
         """Returns lower bound of all parameters as a list"""
-        return [np.min(p) for p in self.parameterValues]
+        pass
 
     @property
     def upperBound(self):
         """Returns upper bound of all parameters as a list"""
-        return [np.max(p) for p in self.parameterValues]
+        pass
 
     @property
     def ndims(self):
         """Number of dimensions (parameters)"""
-        return len(self.parameters)
+        pass
 
     @staticmethod
     def _validate_single_bound(single_bound):
@@ -164,15 +134,7 @@ class ParameterSpace:
         :param single_bound: single coordinate bound to validate
         :type single_bound: list|tuple
         """
-        assert isinstance(
-            single_bound, (list, tuple)
-        ), "An error occured while validating the ParameterSpace of kind 'bound': Pass parameter bounds as a list or tuple!"
-        assert (
-            len(single_bound) == 2
-        ), "An error occured while validating the ParameterSpace of kind 'bound': Only two bounds (min and max) are allowed"
-        assert (
-            single_bound[1] > single_bound[0]
-        ), "An error occured while validating the ParameterSpace of kind 'bound': Minimum parameter value can't be larger than the maximum!"
+        pass
 
     def _validate_param_bounds(self, param_bounds):
         """
@@ -180,11 +142,7 @@ class ParameterSpace:
         :param param_bounds: parameter bounds to validate
         :type param_bounds: list|None
         """
-        assert param_bounds is not None
-        assert isinstance(param_bounds, (list, tuple))
-        # check every single parameter bound
-        for single_bound in param_bounds:
-            self._validate_single_bound(single_bound)
+        pass
 
     def _processParameterDict(self, parameters):
         """Processes all parameters and do checks. Determine the kind of the parameter space.
@@ -194,47 +152,7 @@ class ParameterSpace:
         :retun: processed parameter dictionary
         :rtype: dict
         """
-
-        # convert all parameter arrays into lists
-        for key, value in parameters.items():
-            if isinstance(value, np.ndarray):
-                assert len(value.shape) == 1, f"Parameter {key} is not one-dimensional."
-                value = value.tolist()
-                parameters[key] = value
-
-        # auto detect the parameter kind
-        if self.kind is None:
-            for key, value in parameters.items():
-                # auto detect what kind of space we have
-                # kind = "point" is a single point in parameter space, one value only
-                # kind = "bound" is a bounded parameter space with 2 values: min and max
-                # kind = "grid" is a grid space with as many values on each axis as wished
-
-                # first, we assume grid
-                self.kind = "grid"
-                parameterLengths = [len(value) for key, value in parameters.items()]
-                # if all parameters have the same length
-                if parameterLengths.count(parameterLengths[0]) == len(parameterLengths):
-                    if parameterLengths[0] == 1:
-                        self.kind = "point"
-                    elif parameterLengths[0] == 2:
-                        self.kind = "bound"
-            logging.info(f'Assuming parameter kind "{self.kind}"')
-
-        # do some kind-specific tests
-        if self.kind == "bound":
-            # check the boundaries
-            self._validate_param_bounds(list(parameters.values()))
-
-        # set all parameters as attributes for easy access
-        for key, value in parameters.items():
-            setattr(self, key, value)
-
-        return parameters
+        pass
 
     def _parameterListsToDict(self, keys, values):
-        parameters = {}
-        assert len(keys) == len(values), "Names and values of parameters are not same length."
-        for key, value in zip(keys, values):
-            parameters[key] = value
-        return parameters
+        pass

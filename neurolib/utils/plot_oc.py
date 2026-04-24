@@ -36,46 +36,7 @@ def plot_oc_singlenode(
     :type plot_control_vars:   List, optional
 
     """
-    fig, ax = plt.subplots(3, 1, figsize=(8, 6), constrained_layout=True)
-
-    # Plot the target (dashed line) and unperturbed activity
-    t_array = np.arange(0, duration + dt, dt)
-
-    # Plot the controlled state and the initial/ original state (dashed line)
-    for v in plot_state_vars:
-        ax[0].plot(
-            t_array, state[0, v, :], label="state var " + str(v), color=colors[v]
-        )
-        ax[0].plot(
-            t_array,
-            target[0, v, :],
-            linestyle="dashed",
-            label="target var " + str(v),
-            color=colors[v],
-        )
-    ax[0].legend(loc="upper right")
-    ax[0].set_title("Activity without stimulation and target activity")
-
-    # Plot the computed control signal and the initial/ original control signal (dashed line)
-    for v in plot_control_vars:
-        ax[1].plot(
-            t_array,
-            control[0, v, :],
-            label="stimulation var " + str(v),
-            color=colors[v],
-        )
-        ax[1].plot(
-            t_array,
-            orig_input[0, v, :],
-            linestyle="dashed",
-            label="input var " + str(v),
-            color=colors[v],
-        )
-    ax[1].legend(loc="upper right")
-    ax[1].set_title("Active stimulation and input stimulation")
-    ax[2].plot(cost_array)
-    ax[2].set_title("Cost throughout optimization.")
-    plt.show()
+    pass
 
 
 def plot_oc_network(
@@ -115,48 +76,7 @@ def plot_oc_network(
     :param plot_control_vars:  List of indices of control variables that should be plotted
     :type plot_control_vars:   List, optional
     """
-
-    t_array = np.arange(0, duration + dt, dt)
-    fig, ax = plt.subplots(3, N, figsize=(12, 8), constrained_layout=True)
-
-    # Plot the controlled state and the initial/ original state (dashed line)
-    for n in range(N):
-        for v in plot_state_vars:
-            ax[0, n].plot(
-                t_array, state[n, v, :], label="state var " + str(v), color=colors[v]
-            )
-            ax[0, n].plot(
-                t_array,
-                target[n, v, :],
-                linestyle="dashed",
-                label="target var " + str(v),
-                color=colors[v],
-            )
-        # ax[0, n].legend(loc="upper right")
-        ax[0, n].set_title(f"Activity and target, node %s" % (n))
-
-        # Plot the computed control signal and the initial/ original control signal (dashed line)
-        for v in plot_control_vars:
-            ax[1, n].plot(
-                t_array,
-                control[n, v, :],
-                label="stimulation var " + str(v),
-                color=colors[v],
-            )
-            ax[1, n].plot(
-                t_array,
-                orig_input[n, v, :],
-                linestyle="dashed",
-                label="input var " + str(v),
-                color=colors[v],
-            )
-        ax[1, n].set_title(f"Stimulation and input, node %s" % (n))
-
-    ax[2, 0].plot(cost_array)
-    ax[2, 0].set_title("Cost throughout optimization.")
-    ax[2, 1].plot(step_array)
-    ax[2, 1].set_title("Step size throughout optimization.")
-    ax[2, 1].set_ylim(bottom=0, top=None)
+    pass
 
 
 plt.show()

@@ -75,6 +75,4 @@ class ThalamicMassModel(Model):
         super().__init__(integration=integration, params=params)
 
     def randomICs(self):
-        ics = dp.generateRandomICs()
-        for idx, iv in enumerate(self.init_vars):
-            self.params[iv] = ics[idx]
+        pass

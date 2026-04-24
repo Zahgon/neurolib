@@ -1,16 +1,13 @@
 """
 Functions for creating stimuli and noise inputs for models.
 """
-
 import inspect
 import logging
-
 import numba
 import numpy as np
 from chspy import CubicHermiteSpline
 from ..models.model import Model
 from scipy.signal import square
-
 
 class Input:
     """
@@ -30,11 +27,9 @@ class Input:
         """
         self.n = n
         self.seed = seed
-        # seed the generator
         np.random.seed(seed)
-        # get parameter names
         self.param_names = inspect.getfullargspec(self.__init__).args
-        self.param_names.remove("self")
+        self.param_names.remove('self')
 
     def __add__(self, other):
         """
@@ -69,9 +64,7 @@ class Input:
         """
         Return the parameters of the input as dict.
         """
-        assert all(hasattr(self, name) for name in self.param_names), self.param_names
-        params = {name: getattr(self, name) for name in self.param_names}
-        return {"type": self.__class__.__name__, **params}
+        pass
 
     def update_params(self, params_dict):
         """
@@ -80,20 +73,7 @@ class Input:
         :param params_dict: New parameters for this input
         :type params_dict: dict
         """
-
-        def _sanitize(value):
-            """
-            Change string `None` to actual None - can happen with Exploration or
-            Evolution, since `pypet` does None -> "None".
-            """
-            if value == "None":
-                return None
-            else:
-                return value
-
-        for param, value in params_dict.items():
-            if hasattr(self, param):
-                setattr(self, param, _sanitize(value))
+        pass
 
     def _get_times(self, duration, dt):
         """
@@ -104,7 +84,7 @@ class Input:
         :param dt: dt of input, in milliseconds
         :type dt: float
         """
-        self.times = np.arange(dt, duration + dt, dt)
+        pass
 
     def generate_input(self, duration, dt):
         """
@@ -115,7 +95,7 @@ class Input:
         :param dt: dt of input, in milliseconds
         :type dt: float
         """
-        raise NotImplementedError
+        pass
 
     def as_array(self, duration, dt):
         """
@@ -126,9 +106,7 @@ class Input:
         :param dt: dt of input, in milliseconds
         :type dt: float
         """
-        array = self.generate_input(duration, dt)
-        self._reset()
-        return array
+        pass
 
     def as_cubic_splines(self, duration, dt, shift_start_time=0.0):
         """
@@ -141,10 +119,7 @@ class Input:
         :param shift_start_time: By how much to shift the stimulus start time
         :type shift_start_time: float
         """
-        self._get_times(duration, dt)
-        splines = CubicHermiteSpline.from_data(self.times + shift_start_time, self.generate_input(duration, dt).T)
-        self._reset()
-        return splines
+        pass
 
     def to_model(self, model):
         """
@@ -158,24 +133,14 @@ class Input:
         :param model: neurolib's model
         :type model: `neurolib.models.Model`
         """
-        assert isinstance(model, Model)
-        # set number of spatial dimensions as the number of nodes in the brian network
-        self.n = model.params["N"]
-        return self.as_array(duration=model.params["duration"], dt=model.params["dt"])
-
+        pass
 
 class Stimulus(Input):
     """
     Generates a stimulus with optional start and end times.
     """
 
-    def __init__(
-        self,
-        start=None,
-        end=None,
-        n=1,
-        seed=None,
-    ):
+    def __init__(self, start=None, end=None, n=1, seed=None):
         """
         :param start: start of the stimulus, in milliseconds
         :type start: float
@@ -186,37 +151,20 @@ class Stimulus(Input):
         self.end = end
         self._default_start = start
         self._default_end = end
-        super().__init__(
-            n=n,
-            seed=seed,
-        )
+        super().__init__(n=n, seed=seed)
 
     def _reset(self):
-        self.start = self._default_start
-        self.end = self._default_end
+        pass
 
     def _get_times(self, duration, dt):
-        super()._get_times(duration=duration, dt=dt)
-        self.start = self.start or 0.0
-        self.end = self.end or duration + dt
-        assert self.start < duration
-        assert self.end <= duration + dt
+        pass
 
     def _trim_stim(self, stim_input):
         """
         Trim stimulus. Translate the start of the stimulus by
         padding the beginning and replace the end with zeros.
         """
-        # trim start
-        how_much = int(np.sum(self.times <= self.start))
-        # translate start of the stim by padding the beginning with zeros
-        stim_input = np.pad(stim_input, ((0, 0), (how_much, 0)), mode="constant")
-        if how_much > 0:
-            stim_input = stim_input[:, :-how_much]
-        # trim end
-        stim_input[:, self.times > self.end] = 0.0
-        return stim_input
-
+        pass
 
 class BaseMultipleInputs(Stimulus):
     """
@@ -228,7 +176,7 @@ class BaseMultipleInputs(Stimulus):
         :param inputs: List of Inputs to combine
         :type inputs: list[`Input`]
         """
-        assert all(isinstance(input, Input) for input in inputs)
+        assert all((isinstance(input, Input) for input in inputs))
         self.inputs = inputs
 
     def __len__(self):
@@ -245,31 +193,23 @@ class BaseMultipleInputs(Stimulus):
 
     @property
     def n(self):
-        n = set([input.n for input in self])
-        assert len(n) == 1
-        return next(iter(n))
+        pass
 
     @n.setter
     def n(self, n):
-        for input in self:
-            input.n = n
+        pass
 
     def get_params(self):
         """
         Get all parameters recursively for all inputs.
         """
-        return {
-            "type": self.__class__.__name__,
-            **{f"input_{i}": input.get_params() for i, input in enumerate(self)},
-        }
+        pass
 
     def update_params(self, params_dict):
         """
         Update all parameters recursively.
         """
-        for i, input in enumerate(self):
-            input.update_params(params_dict.get(f"input_{i}", {}))
-
+        pass
 
 class SummedStimulus(BaseMultipleInputs):
     """
@@ -293,20 +233,13 @@ class SummedStimulus(BaseMultipleInputs):
         """
         Return sum of all inputes as numpy array.
         """
-        return np.sum(
-            np.stack([input.as_array(duration, dt) for input in self.inputs]),
-            axis=0,
-        )
+        pass
 
     def as_cubic_splines(self, duration, dt, shift_start_time=0.0):
         """
         Return sum of all inputes as cubic Hermite splines.
         """
-        result = self.inputs[0].as_cubic_splines(duration, dt, shift_start_time)
-        for input in self.inputs[1:]:
-            result.plus(input.as_cubic_splines(duration, dt, shift_start_time))
-        return result
-
+        pass
 
 class ConcatenatedStimulus(BaseMultipleInputs):
     """
@@ -326,7 +259,7 @@ class ConcatenatedStimulus(BaseMultipleInputs):
         if length_ratios is None:
             length_ratios = [1] * len(inputs)
         assert len(inputs) == len(length_ratios)
-        assert all(length > 0 for length in length_ratios)
+        assert all((length > 0 for length in length_ratios))
         self.length_ratios = length_ratios
         super().__init__(inputs)
 
@@ -334,10 +267,7 @@ class ConcatenatedStimulus(BaseMultipleInputs):
         assert isinstance(other, Input)
         assert self.n == other.n
         if isinstance(other, ConcatenatedStimulus):
-            return ConcatenatedStimulus(
-                inputs=self.inputs + other.inputs,
-                length_ratios=self.length_ratios + other.length_ratios,
-            )
+            return ConcatenatedStimulus(inputs=self.inputs + other.inputs, length_ratios=self.length_ratios + other.length_ratios)
         else:
             return ConcatenatedStimulus(inputs=self.inputs + [other], length_ratios=self.length_ratios + [1])
 
@@ -345,28 +275,10 @@ class ConcatenatedStimulus(BaseMultipleInputs):
         """
         Return concatenation of all stimuli as numpy array.
         """
-        # normalize ratios to sum = 1
-        ratios = [i / sum(self.length_ratios) for i in self.length_ratios]
-        concat = np.concatenate(
-            [input.as_array(duration * ratio, dt) for input, ratio in zip(self.inputs, ratios)],
-            axis=1,
-        )
-        length = int(duration / dt)
-        # due to rounding errors, the overall length might be longer by a few dt
-        return concat[:, :length]
+        pass
 
     def as_cubic_splines(self, duration, dt, shift_start_time=0.0):
-        # normalize ratios to sum = 1
-        ratios = [i / sum(self.length_ratios) for i in self.length_ratios]
-        result = self.inputs[0].as_cubic_splines(duration * ratios[0], dt, shift_start_time)
-        for input, ratio in zip(self.inputs[1:], ratios[1:]):
-            last_time = result[-1].time
-            temp = input.as_cubic_splines(duration * ratio, dt, shift_start_time=last_time)
-            # `extend` adds an iteratable (whole `CubicHermiteSpline` is an
-            # iterable of `Anchors`) to the current spline
-            result.extend(temp)
-        return result
-
+        pass
 
 class ZeroInput(Input):
     """
@@ -374,9 +286,7 @@ class ZeroInput(Input):
     """
 
     def generate_input(self, duration, dt):
-        self._get_times(duration=duration, dt=dt)
-        return np.zeros((self.n, self.times.shape[0]))
-
+        pass
 
 class WienerProcess(Input):
     """
@@ -384,9 +294,7 @@ class WienerProcess(Input):
     """
 
     def generate_input(self, duration, dt):
-        self._get_times(duration=duration, dt=dt)
-        return np.random.normal(0.0, np.sqrt(dt), (self.n, self.times.shape[0]))
-
+        pass
 
 class OrnsteinUhlenbeckProcess(Input):
     """
@@ -394,14 +302,7 @@ class OrnsteinUhlenbeckProcess(Input):
         dX = (mu - X)/tau * dt + sigma*dW
     """
 
-    def __init__(
-        self,
-        mu,
-        sigma,
-        tau,
-        n=1,
-        seed=None,
-    ):
+    def __init__(self, mu, sigma, tau, n=1, seed=None):
         """
         :param mu: Drift of the OU process
         :type mu: float
@@ -413,15 +314,10 @@ class OrnsteinUhlenbeckProcess(Input):
         self.mu = mu
         self.sigma = sigma
         self.tau = tau
-        super().__init__(
-            n=n,
-            seed=seed,
-        )
+        super().__init__(n=n, seed=seed)
 
     def generate_input(self, duration, dt):
-        self._get_times(duration=duration, dt=dt)
-        x = np.random.rand(self.n, self.times.shape[0]) * self.mu
-        return self.numba_ou(x, self.times, dt, self.mu, self.sigma, self.tau, self.n)
+        pass
 
     @staticmethod
     @numba.njit()
@@ -430,56 +326,30 @@ class OrnsteinUhlenbeckProcess(Input):
         Generation of Ornstein-Uhlenback input - wrapped in numba's jit for
         speed.
         """
-        for i in range(times.shape[0] - 1):
-            x[:, i + 1] = x[:, i] + dt * ((mu - x[:, i]) / tau) + sigma * np.sqrt(dt) * np.random.randn(n)
-        return x
-
+        pass
 
 class StepInput(Stimulus):
     """
     Step input.
     """
 
-    def __init__(
-        self,
-        step_size,
-        start=None,
-        end=None,
-        n=1,
-        seed=None,
-    ):
+    def __init__(self, step_size, start=None, end=None, n=1, seed=None):
         """
         :param step_size: Size of the step, i.e., the amplitude.
         :type step_size: float
         """
         self.step_size = step_size
-        super().__init__(
-            start=start,
-            end=end,
-            n=n,
-            seed=seed,
-        )
+        super().__init__(start=start, end=end, n=n, seed=seed)
 
     def generate_input(self, duration, dt):
-        self._get_times(duration=duration, dt=dt)
-        return self._trim_stim(np.ones((self.n, self.times.shape[0])) * self.step_size)
-
+        pass
 
 class SinusoidalInput(Stimulus):
     """
     Sinusoidal input.
     """
 
-    def __init__(
-        self,
-        amplitude,
-        frequency,
-        dc_bias=False,
-        start=None,
-        end=None,
-        n=1,
-        seed=None,
-    ):
+    def __init__(self, amplitude, frequency, dc_bias=False, start=None, end=None, n=1, seed=None):
         """
         :param amplitude: Amplitude of the sinusoid.
         :type amplitude: float
@@ -492,36 +362,17 @@ class SinusoidalInput(Stimulus):
         self.amplitude = amplitude
         self.frequency = frequency
         self.dc_bias = dc_bias
-        super().__init__(
-            start=start,
-            end=end,
-            n=n,
-            seed=seed,
-        )
+        super().__init__(start=start, end=end, n=n, seed=seed)
 
     def generate_input(self, duration, dt):
-        self._get_times(duration=duration, dt=dt)
-        sinusoid = self.amplitude * np.sin(2 * np.pi * self.times * (self.frequency / 1000.0))
-        if self.dc_bias:
-            sinusoid += self.amplitude
-        return self._trim_stim(np.vstack([sinusoid] * self.n))
-
+        pass
 
 class SquareInput(Stimulus):
     """
     Oscillatory square input.
     """
 
-    def __init__(
-        self,
-        amplitude,
-        frequency,
-        dc_bias=False,
-        start=None,
-        end=None,
-        n=1,
-        seed=None,
-    ):
+    def __init__(self, amplitude, frequency, dc_bias=False, start=None, end=None, n=1, seed=None):
         """
         :param amplitude: Amplitude of the square
         :type amplitude: float
@@ -534,35 +385,17 @@ class SquareInput(Stimulus):
         self.amplitude = amplitude
         self.frequency = frequency
         self.dc_bias = dc_bias
-        super().__init__(
-            start=start,
-            end=end,
-            n=n,
-            seed=seed,
-        )
+        super().__init__(start=start, end=end, n=n, seed=seed)
 
     def generate_input(self, duration, dt):
-        self._get_times(duration=duration, dt=dt)
-        square_inp = self.amplitude * square(2 * np.pi * self.times * (self.frequency / 1000.0))
-        if self.dc_bias:
-            square_inp += self.amplitude
-        return self._trim_stim(np.vstack([square_inp] * self.n))
-
+        pass
 
 class LinearRampInput(Stimulus):
     """
     Linear ramp input.
     """
 
-    def __init__(
-        self,
-        inp_max,
-        ramp_length,
-        start=None,
-        end=None,
-        n=1,
-        seed=None,
-    ):
+    def __init__(self, inp_max, ramp_length, start=None, end=None, n=1, seed=None):
         """
         :param inp_max: Maximum of stimulus.
         :type inp_max: float
@@ -571,36 +404,17 @@ class LinearRampInput(Stimulus):
         """
         self.inp_max = inp_max
         self.ramp_length = ramp_length
-        super().__init__(
-            start=start,
-            end=end,
-            n=n,
-            seed=seed,
-        )
+        super().__init__(start=start, end=end, n=n, seed=seed)
 
     def generate_input(self, duration, dt):
-        self._get_times(duration=duration, dt=dt)
-        linear_inp = (self.inp_max / self.ramp_length) * self.times * (self.times < self.ramp_length) + self.inp_max * (
-            self.times >= self.ramp_length
-        )
-        return self._trim_stim(np.vstack([linear_inp] * self.n))
-
+        pass
 
 class ExponentialInput(Stimulus):
     """
     Exponential rise or decay input.
     """
 
-    def __init__(
-        self,
-        inp_max,
-        exp_coef=30.0,
-        exp_type="rise",
-        start=None,
-        end=None,
-        n=1,
-        seed=None,
-    ):
+    def __init__(self, inp_max, exp_coef=30.0, exp_type='rise', start=None, end=None, n=1, seed=None):
         """
         :param inp_max: Maximum of stimulus.
         :type inp_max: float
@@ -612,22 +426,12 @@ class ExponentialInput(Stimulus):
         """
         self.inp_max = inp_max
         self.exp_coef = exp_coef
-        assert exp_type in ["rise", "decay"]
+        assert exp_type in ['rise', 'decay']
         self.exp_type = exp_type
-        super().__init__(
-            start=start,
-            end=end,
-            n=n,
-            seed=seed,
-        )
+        super().__init__(start=start, end=end, n=n, seed=seed)
 
     def generate_input(self, duration, dt):
-        self._get_times(duration=duration, dt=dt)
-        exponential = np.exp(-(self.exp_coef / self.times[-1]) * self.times) * self.inp_max
-        if self.exp_type == "rise":
-            exponential = -exponential + self.inp_max
-        return self._trim_stim(np.vstack([exponential] * self.n))
-
+        pass
 
 def RectifiedInput(amplitude, n=1):
     """
@@ -642,15 +446,4 @@ def RectifiedInput(amplitude, n=1):
     :return: Concatenated input which represents the rectified stimulus with exponential decay
     :rtype: `ConctatenatedInput`
     """
-
-    return ConcatenatedStimulus(
-        [
-            StepInput(step_size=-amplitude, n=n),
-            ExponentialInput(inp_max=amplitude, exp_type="rise", exp_coef=12.5, n=n)
-            + StepInput(step_size=-amplitude, n=n),
-            StepInput(step_size=amplitude, n=n),
-            ExponentialInput(amplitude, exp_type="decay", exp_coef=7.5, n=n),
-            StepInput(step_size=0.0, n=n),
-        ],
-        length_ratios=[0.5, 2.5, 0.5, 1.5, 1.0],
-    )
+    pass
